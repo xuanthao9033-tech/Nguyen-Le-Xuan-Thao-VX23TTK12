@@ -1,0 +1,215 @@
+﻿@using IphoneStoreBE.VModels
+@model IphoneStoreBE.Common.Models.PagedEntity<IphoneStoreBE.VModels.OrderGetVModel>
+
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">
+        <i class="bi bi-cart-check"></i> Quản Lý Đơn Hàng
+    </h2>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle-fill"></i> 
+            <strong>Lỗi!</strong> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle-fill"></i> 
+            <strong>Thành công!</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <!-- Debug info -->
+            @if (Model == null)
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    <strong>Cảnh báo:</strong> Không nhận được dữ liệu từ server.
+                </div>
+            }
+            else if (Model.Items == null)
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    <strong>Cảnh báo:</strong> Danh sách đơn hàng không hợp lệ.
+                </div>
+            }
+            else if (!Model.Items.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Thông báo:</strong> Không có đơn hàng nào. 
+                    <small class="text-muted">(Tổng: @Model.TotalItems, Trang: @Model.PageIndex/@Model.TotalPages)</small>
+                </div>
+            }
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng tiền</th>
+                            <th>Thanh toán</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày đặt</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model?.Items != null && Model.Items.Any())
+                        {
+                            foreach (var order in Model.Items)
+                            {
+                                <tr>
+                                    <td><strong>@order.OrderCode</strong></td>
+                                    <td>@order.UserName</td>
+                                    <td><strong>@string.Format("{0:N0}", order.Total) ₫</strong></td>
+                                    <td>
+                                        @if (order.PaymentMethod == "COD")
+                                        {
+                                            <span class="badge bg-info">COD</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Chuyển khoản</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (order.OrderStatus == "Chờ xác nhận")
+                                        {
+                                            <span class="badge bg-warning">Chờ xác nhận</span>
+                                        }
+                                        else if (order.OrderStatus == "Đã xác nhận")
+                                        {
+                                            <span class="badge bg-primary">Đã xác nhận</span>
+                                        }
+                                        else if (order.OrderStatus == "Đang chuẩn bị")
+                                        {
+                                            <span class="badge bg-info">Đang chuẩn bị</span>
+                                        }
+                                        else if (order.OrderStatus == "Đang giao hàng")
+                                        {
+                                            <span class="badge bg-success">Đang giao hàng</span>
+                                        }
+                                        else if (order.OrderStatus == "Đã giao thành công")
+                                        {
+                                            <span class="badge bg-dark">Hoàn thành</span>
+                                        }
+                                        else if (order.OrderStatus == "Đã hủy")
+                                        {
+                                            <span class="badge bg-danger">Đã hủy</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@order.OrderStatus</span>
+                                        }
+                                    </td>
+                                    <td>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <a href="/Admin/OrderDetail/@order.Id" class="btn btn-sm btn-info" title="Chi tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    <strong>Chưa có đơn hàng nào</strong>
+                                    <br/>
+                                    <small>Đơn hàng sẽ xuất hiện khi khách hàng đặt hàng</small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model?.TotalPages > 1)
+            {
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(Model.PageIndex - 1)">«</a>
+                        </li>
+
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                                <a class="page-link" href="?page=@i">@i</a>
+                            </li>
+                        }
+
+                        <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(Model.PageIndex + 1)">»</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Log debug info
+        console.log('Model:', @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { 
+            HasModel = Model != null,
+            HasItems = Model?.Items != null,
+            ItemCount = Model?.Items?.Count ?? 0,
+            TotalItems = Model?.TotalItems ?? 0,
+            PageIndex = Model?.PageIndex ?? 0,
+            TotalPages = Model?.TotalPages ?? 0
+        })));
+
+        async function updateStatus(orderId, status) {
+            try {
+                const response = await fetch(`/Admin/UpdateOrderStatus?id=${orderId}&status=${encodeURIComponent(status)}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công!',
+                        text: result.message,
+                        timer: 2000
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi!',
+                        text: result.message
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: 'Không thể cập nhật trạng thái đơn hàng.'
+                });
+            }
+        }
+    </script>
+}

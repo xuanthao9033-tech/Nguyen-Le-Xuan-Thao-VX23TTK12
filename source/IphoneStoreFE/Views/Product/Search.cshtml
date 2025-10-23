@@ -1,0 +1,156 @@
+﻿@using IphoneStoreBE.VModels
+@model IphoneStoreFE.Models.PagedEntity<ProductGetVModel>
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Kết quả tìm kiếm";
+    var userId = ViewBag.UserId ?? 0;
+    var keyword = ViewBag.SearchKeyword ?? "";
+}
+
+<div class="container mt-5">
+    <h3 class="fw-bold mb-4 text-center">🔍 Tìm kiếm: @keyword</h3>
+
+    @if (Model?.Items == null || !Model.Items.Any())
+    {
+        <div class="alert alert-info text-center">Không tìm thấy sản phẩm phù hợp.</div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-4 g-4">
+            @foreach (var product in Model.Items)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 rounded-3">
+                        <div class="ratio ratio-4x3 overflow-hidden rounded-top"
+                             ondblclick="location.href='@Url.Action("Details", "Product", new { id = product.Id })'">
+                            <img src="@Url.Content(string.IsNullOrEmpty(product.ImageUrl) ? "~/images/default-product.jpg" : product.ImageUrl)"
+                                 alt="@product.ProductName"
+                                 class="w-100 h-100" style="object-fit: cover; transition: 0.3s;" />
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="fw-bold mt-2">@product.ProductName</h6>
+                            <p class="text-muted mb-2">@product.Price.ToString("N0") ₫</p>
+                            <div class="mt-auto d-grid gap-2">
+                                <a href="@Url.Action("Details", "Product", new { id = product.Id })" class="btn btn-outline-primary">Chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Phân trang -->
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+                    <a class="page-link" href="?keyword=@keyword&page=@(Model.PageIndex - 1)">«</a>
+                </li>
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                        <a class="page-link" href="?keyword=@keyword&page=@i">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="?keyword=@keyword&page=@(Model.PageIndex + 1)">»</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        const userId = @Json.Serialize(userId);
+
+        async function addToCart(productId, quantity) {
+            try {
+                if (!userId || userId === 0) {
+                    window.location.href = "/Account/Login";
+                    return;
+                }
+
+                const res = await fetch("/Cart/AddToCart", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        productId: productId,
+                        quantity: quantity
+                    })
+                });
+
+                const result = await res.json();
+
+                if (res.ok && result.success) {
+                    window.location.href = "/Cart/Index";
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi!',
+                        text: result.message || "Không thể thêm vào giỏ hàng."
+                    });
+                }
+            } catch (err) {
+                console.error("🚨 [Fetch Error]:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: "Lỗi kết nối máy chủ."
+                });
+            }
+        }
+
+        async function buyNow(productId) {
+            try {
+                if (!userId || userId === 0) {
+                    window.location.href = "/Account/Login";
+                    return;
+                }
+
+                const res = await fetch("/Cart/AddToCart", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        productId: productId,
+                        quantity: 1
+                    })
+                });
+
+                const result = await res.json();
+
+                if (res.ok && result.success) {
+                    // Chuyển thẳng đến trang đặt hàng thay vì giỏ hàng
+                    window.location.href = "/Order/Create";
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi!',
+                        text: result.message || "Không thể thêm vào giỏ hàng."
+                    });
+                }
+            } catch (err) {
+                console.error("🚨 [Fetch Error]:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: "Lỗi kết nối máy chủ."
+                });
+            }
+        }
+    </script>
+}

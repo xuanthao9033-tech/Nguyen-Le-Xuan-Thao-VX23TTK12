@@ -1,0 +1,133 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var user = HttpContextAccessor.HttpContext?.Session.GetString("User");
+    var token = HttpContextAccessor.HttpContext?.Session.GetString("Token");
+    var isLoggedIn = !string.IsNullOrEmpty(user);
+    var role = HttpContextAccessor.HttpContext?.Session.GetString("Role");
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Apple Store</title>
+
+    <!-- Bootstrap & CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- 🧭 NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <!-- Logo -->
+            <a class="navbar-brand fw-bold text-primary" href="/">
+                🍎 Apple Store
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Menu trái -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active text-primary" : "")" href="/">
+                            Trang chủ
+                        </a>
+                    </li>
+
+                    <!-- 🔹 Dropdown Danh mục -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle fw-semibold" href="#" id="categoryDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            Danh mục
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
+                            <div class="navbar-nav">
+                                <a class="nav-link" href="/Product/CategoryById?categoryId=1">iPhone</a>
+                                <a class="nav-link" href="/Product/CategoryById?categoryId=2">iPad</a>
+                                <a class="nav-link" href="/Product/CategoryById?categoryId=3">MacBook</a>
+                                <a class="nav-link" href="/Product/CategoryById?categoryId=4">Apple Watch</a>
+                                <a class="nav-link" href="/Product/CategoryById?categoryId=5">Phụ kiện</a>
+                            </div>
+                        </ul>
+                    </li>
+                </ul>
+
+                <!-- 🔍 Ô tìm kiếm -->
+                <form class="d-flex me-3" method="get" action="/Product/Search">
+                    <input class="form-control me-2" type="search" name="keyword" placeholder="Tìm kiếm sản phẩm..." />
+                    <button class="btn btn-outline-primary" type="submit">Tìm</button>
+                </form>
+
+                <!-- 👤 User -->
+                <ul class="navbar-nav">
+                    @if (!isLoggedIn)
+                    {
+                        <!-- Nếu chưa đăng nhập -->
+                        <li class="nav-item">
+                            <a class="nav-link fw-semibold" href="/Account/Login">Đăng nhập</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary ms-2" href="/Account/Register">Đăng ký</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <!-- Nếu đã đăng nhập -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle fw-semibold text-primary" href="#" id="userDropdown"
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Xin chào, @user 👋
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="/Cart/Index">🛒 Giỏ hàng</a></li>
+                                <li><a class="dropdown-item" href="/Order/Index">📦 Đơn hàng</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><a class="dropdown-item text-danger" href="/Account/Logout">🚪 Đăng xuất</a></li>
+                            </ul>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 🧱 CONTENT -->
+    <main class="container mt-4 mb-5 flex-grow-1">
+        @RenderBody()
+    </main>
+
+    <!-- 📢 FOOTER -->
+    <footer class="bg-light text-center py-3 border-top">
+        <p class="mb-0 text-muted">
+            © 2025 Apple Store | Thiết kế bởi <strong>admin</strong>
+        </p>
+    </footer>
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ✅ Fix: Dropdown link click -->
+    <script>
+        document.querySelectorAll('.dropdown-menu a.dropdown-item').forEach(link => {
+            link.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href && href !== '#') {
+                    window.location.href = href;
+                }
+            });
+        });
+    </script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

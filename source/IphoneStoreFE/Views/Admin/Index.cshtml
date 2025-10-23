@@ -1,0 +1,231 @@
+@{
+    ViewData["Title"] = "Dashboard Admin";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-speedometer2"></i> Dashboard Quản Trị
+        </h2>
+        <small class="text-muted">Tổng quan hệ thống</small>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Tổng số đơn hàng -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Tổng đơn hàng</h6>
+                            <h2 class="mb-0 fw-bold text-primary">@(ViewBag.TotalOrders ?? 0)</h2>
+                            <small class="text-muted">Tất cả đơn hàng</small>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-cart-check fs-1 text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Đơn hàng đã giao -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Đã giao thành công</h6>
+                            <h2 class="mb-0 fw-bold text-success">@(ViewBag.DeliveredOrders ?? 0)</h2>
+                            <small class="text-muted">Đơn hàng hoàn thành</small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-check-circle fs-1 text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chờ xác nhận -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Chờ xác nhận</h6>
+                            <h2 class="mb-0 fw-bold text-warning">@(ViewBag.PendingOrders ?? 0)</h2>
+                            <small class="text-muted">Cần xử lý</small>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-hourglass-split fs-1 text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng doanh thu -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Tổng doanh thu</h6>
+                            <h2 class="mb-0 fw-bold text-info">@string.Format("{0:N0}", ViewBag.TotalRevenue ?? 0)?</h2>
+                            <small class="text-muted">Đơn hàng đã giao</small>
+                        </div>
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="bi bi-currency-dollar fs-1 text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Order Status Chart -->
+        <div class="col-lg-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart"></i> Trạng thái đơn hàng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @{
+                        var totalOrders = (int)(ViewBag.TotalOrders ?? 0);
+                        var deliveredOrders = (int)(ViewBag.DeliveredOrders ?? 0);
+                        var pendingOrders = (int)(ViewBag.PendingOrders ?? 0);
+                        var otherOrders = totalOrders - deliveredOrders - pendingOrders;
+                    }
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column gap-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-warning">Chờ xác nhận</span>
+                                        <small class="text-muted">@pendingOrders</small>
+                                    </div>
+                                    <strong>@(totalOrders > 0 ? Math.Round((double)pendingOrders / totalOrders * 100, 1) : 0)%</strong>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-warning" role="progressbar" 
+                                         style="width: @(totalOrders > 0 ? (double)pendingOrders / totalOrders * 100 : 0)%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column gap-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-success">Đã giao</span>
+                                        <small class="text-muted">@deliveredOrders</small>
+                                    </div>
+                                    <strong>@(totalOrders > 0 ? Math.Round((double)deliveredOrders / totalOrders * 100, 1) : 0)%</strong>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: @(totalOrders > 0 ? (double)deliveredOrders / totalOrders * 100 : 0)%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column gap-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-info">Đang xử lý</span>
+                                        <small class="text-muted">@otherOrders</small>
+                                    </div>
+                                    <strong>@(totalOrders > 0 ? Math.Round((double)otherOrders / totalOrders * 100, 1) : 0)%</strong>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-info" role="progressbar" 
+                                         style="width: @(totalOrders > 0 ? (double)otherOrders / totalOrders * 100 : 0)%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning"></i> Thao tác nhanh
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="/Admin/Products" class="btn btn-outline-primary w-100 py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-box-seam fs-4"></i>
+                                    <div class="text-start">
+                                        <div class="fw-bold">Quản lý sản phẩm</div>
+                                        <small>Thêm, sửa, xóa</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/Admin/Orders" class="btn btn-outline-success w-100 py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-cart-check fs-4"></i>
+                                    <div class="text-start">
+                                        <div class="fw-bold">Quản lý đơn hàng</div>
+                                        <small>Xem & cập nhật</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/Admin/CreateProduct" class="btn btn-outline-info w-100 py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-plus-circle fs-4"></i>
+                                    <div class="text-start">
+                                                    <div class="fw-bold">Thêm sản phẩm</div>
+                                        <small>Tạo mới</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/" class="btn btn-outline-secondary w-100 py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-house fs-4"></i>
+                                    <div class="text-start">
+                                        <div class="fw-bold">Vị trí trang chủ</div>
+                                        <small>Xem giao diện người dùng</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+}

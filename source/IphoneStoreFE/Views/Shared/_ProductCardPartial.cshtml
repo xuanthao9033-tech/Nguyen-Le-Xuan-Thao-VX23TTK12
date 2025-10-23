@@ -1,0 +1,36 @@
+﻿@model IphoneStoreBE.VModels.ProductGetVModel
+@{
+    var userId = ViewBag.UserId ?? 0;
+    var imageSrc = string.IsNullOrEmpty(Model.ImageUrl)
+        ? Url.Content("~/images/default-product.jpg")
+        : (Model.ImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+            ? Model.ImageUrl
+            : Url.Content("/" + Model.ImageUrl.TrimStart('/')));
+}
+
+<div class="col">
+    <div class="card h-100 shadow-sm border-0 rounded-3">
+        <div class="ratio ratio-4x3 overflow-hidden rounded-top"
+             ondblclick="location.href='@Url.Action("Details", "Home", new { id = Model.Id })'">
+            <img src="@imageSrc" alt="@Model.ProductName" class="w-100 h-100 object-fit-cover" />
+        </div>
+
+        <div class="card-body d-flex flex-column">
+            <h6 class="fw-bold mt-2">@Model.ProductName</h6>
+            <p class="text-muted mb-2">@Model.Price.ToString("N0") ₫</p>
+
+            <div class="mt-auto d-grid gap-2">
+                @if ((int)userId == 0)
+                {
+                    <a href="/Account/Login" class="btn btn-outline-primary">Thêm giỏ hàng</a>
+                    <a href="/Account/Login" class="btn btn-primary">Mua ngay</a>
+                }
+                else
+                {
+                    <button class="btn btn-outline-primary" onclick="addToCart(@Model.Id, 1)">Thêm giỏ hàng</button>
+                    <button class="btn btn-primary" onclick="buyNow(@Model.Id)">Mua ngay</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,122 @@
+﻿@model IphoneStoreBE.VModels.RegisterVModel
+@using IphoneStoreFE.Models
+@using IphoneStoreBE.VModels
+
+@{
+    ViewData["Title"] = "Đăng ký tài khoản - Apple Store";
+    Layout = "_Layout";
+    var roles = ViewBag.Roles as List<RoleViewModel> ?? new List<RoleViewModel>();
+}
+
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow-lg p-4" style="width: 450px;">
+        <div class="text-center mb-4">
+            <h3 class="fw-bold">📝 Đăng ký tài khoản</h3>
+            <p class="text-muted">Tạo tài khoản mới để mua sắm</p>
+        </div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i> @ViewBag.Error
+            </div>
+        }
+
+        <form asp-action="Register" asp-controller="Account" method="post">
+            <div class="mb-3">
+                <label asp-for="UserName" class="form-label">👤 Tên người dùng</label>
+                <input asp-for="UserName" class="form-control" placeholder="Nhập tên của bạn" required />
+                <span asp-validation-for="UserName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">📧 Email</label>
+                <input asp-for="Email" class="form-control" type="email" placeholder="example@email.com" required />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">🔒 Mật khẩu</label>
+                <input asp-for="Password" class="form-control" type="password" placeholder="Nhập mật khẩu" required />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">⚥ Giới tính</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input asp-for="Gender" class="form-check-input" type="radio" value="true" id="genderMale" checked />
+                        <label class="form-check-label" for="genderMale">Nam</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input asp-for="Gender" class="form-check-input" type="radio" value="false" id="genderFemale" />
+                        <label class="form-check-label" for="genderFemale">Nữ</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ DROPDOWN CHỌN ROLE (LUÔN HIỂN THỊ) -->
+            <div class="mb-3">
+                <label asp-for="RoleId" class="form-label">🎭 Vai trò</label>
+                <select asp-for="RoleId" class="form-select">
+                    <option value="">-- Chọn vai trò (Mặc định: User) --</option>
+                    @if (roles != null && roles.Any())
+                    {
+                        @foreach (var role in roles)
+                        {
+                            <option value="@role.Id">@role.RoleName</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="" disabled>Đang tải vai trò...</option>
+                    }
+                </select>
+                <small class="text-muted">
+                    Nếu không chọn, hệ thống sẽ tự động gán vai trò "User"
+                    @if (!roles.Any())
+                    {
+                        <span class="text-danger">(⚠️ Không load được danh sách vai trò)</span>
+                    }
+                </small>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PhoneNumber" class="form-label">📞 Số điện thoại (tùy chọn)</label>
+                <input asp-for="PhoneNumber" class="form-control" placeholder="0123456789" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="UserAddress" class="form-label">🏠 Địa chỉ (tùy chọn)</label>
+                <input asp-for="UserAddress" class="form-control" placeholder="Nhập địa chỉ của bạn" />
+                <span asp-validation-for="UserAddress" class="text-danger"></span>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    ✅ Đăng ký
+                </button>
+            </div>
+        </form>
+
+        <hr class="my-3" />
+
+        <div class="text-center">
+            <span class="text-muted">Đã có tài khoản?</span>
+            <a asp-action="Login" asp-controller="Account" class="text-decoration-none fw-semibold">
+                Đăng nhập ngay
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Debug: Log roles
+        console.log("📊 Roles loaded:", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(roles)));
+        console.log("📊 Role count:", @roles.Count);
+    </script>
+}

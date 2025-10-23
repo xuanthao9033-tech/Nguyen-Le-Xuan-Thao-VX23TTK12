@@ -1,0 +1,363 @@
+﻿@using IphoneStoreBE.VModels
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Thông tin giao hàng - Apple Store";
+    var userId = ViewBag.UserId ?? 0;
+    var cartItems = ViewBag.CartItems as List<CartGetVModel>;
+    decimal totalAmount = cartItems?.Sum(item => item.Price * item.Quantity) ?? 0;
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <!-- Cột trái: Form thông tin giao hàng -->
+        <div class="col-md-7">
+            <h3 class="fw-bold mb-4">🚚 Thông tin giao hàng</h3>
+
+            <form id="orderForm">
+                <div class="mb-3">
+                    <label class="form-label">👤 Họ và tên</label>
+                    <input type="text" id="Recipient" name="Recipient" class="form-control" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">📞 Số điện thoại</label>
+                    <input type="tel" id="PhoneNumber" name="PhoneNumber" class="form-control" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">🏠 Địa chỉ chi tiết</label>
+                    <textarea id="AddressDetailRecipient" name="AddressDetailRecipient" class="form-control" rows="2" required placeholder="Số nhà, tên đường..."></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">🏙️ Tỉnh/Thành phố</label>
+                        <input type="text" id="City" name="City" class="form-control" placeholder="VD: Hà Nội" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">🏘️ Quận/Huyện</label>
+                        <input type="text" id="District" name="District" class="form-control" placeholder="VD: Đống Đa" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">🏡 Phường/Xã</label>
+                        <input type="text" id="Ward" name="Ward" class="form-control" placeholder="VD: Láng Hạ" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">💰 Phương thức thanh toán</label>
+                    <select id="paymentMethod" name="PaymentMethod" class="form-select" required>
+                        <option value="COD">💵 Thanh toán khi nhận hàng (COD)</option>
+                        <option value="BANK">🏦 Chuyển khoản ngân hàng</option>
+                    </select>
+                </div>
+
+                <div id="bankInfo" class="alert alert-info d-none">
+                    <p class="fw-semibold text-center mb-2">📸 Quét mã QR để chuyển khoản</p>
+                    <div class="text-center">
+                        <img src="~/images/payment-qr.png" alt="QR Thanh Toán" width="200" class="rounded shadow-sm border" onerror="this.style.display='none'" />
+                    </div>
+                    <p class="mt-2 small text-center">
+                        <strong>Vietcombank – 0123456789 – Nguyễn Văn A</strong><br />
+                        Nội dung: <strong>Họ tên + SĐT</strong>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Cột phải: Tóm tắt đơn hàng -->
+        <div class="col-md-5">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📦 Tóm tắt đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    @if (cartItems != null && cartItems.Any())
+                    {
+                        <div class="mb-3" style="max-height: 300px; overflow-y: auto;">
+                            @foreach (var item in cartItems)
+                            {
+                                <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                                    <img src="@Url.Content(string.IsNullOrEmpty(item.ImageUrl) ? "~/images/default-product.jpg" : item.ImageUrl)" 
+                                         alt="@item.ProductName" 
+                                         class="rounded me-3" 
+                                         style="width: 60px; height: 60px; object-fit: cover;" />
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">@item.ProductName</h6>
+                                        <small class="text-muted">SL: @item.Quantity × @string.Format("{0:N0}", item.Price) ₫</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong>@string.Format("{0:N0}", item.Price * item.Quantity) ₫</strong>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        <hr />
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tạm tính:</span>
+                            <strong>@string.Format("{0:N0}", totalAmount) ₫</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Phí vận chuyển:</span>
+                            <strong class="text-success">Miễn phí</strong>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="fw-bold fs-5">Tổng cộng:</span>
+                            <strong class="text-danger fs-5">@string.Format("{0:N0}", totalAmount) ₫</strong>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-center text-muted">Giỏ hàng trống</p>
+                    }
+                    
+                    <div class="d-grid gap-2">
+                        <button type="button" id="btnConfirmOrder" class="btn btn-success btn-lg">
+                            ✅ Xác nhận đặt hàng
+                        </button>
+                        <a href="/Cart/Index" class="btn btn-outline-secondary">
+                            ← Quay lại giỏ hàng
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const userId = @userId;
+        const paymentSelect = document.getElementById("paymentMethod");
+        const bankInfo = document.getElementById("bankInfo");
+
+        // Embed cart IDs for sending to server
+        const cartIds = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(cartItems?.Select(ci => ci.Id) ?? new List<int>()));
+
+        console.log("🔧 Order Create Page Initialized");
+        console.log("   UserId:", userId);
+        console.log("   CartIds:", cartIds);
+        console.log("   Cart Count:", cartIds.length);
+
+        // Hiển thị/ẩn thông tin chuyển khoản
+        paymentSelect.addEventListener("change", () => {
+            if (paymentSelect.value === "BANK") {
+                bankInfo.classList.remove("d-none");
+            } else {
+                bankInfo.classList.add("d-none");
+            }
+        });
+
+        // Xác nhận đặt hàng
+        document.getElementById("btnConfirmOrder").addEventListener("click", async () => {
+            console.log("\n🚀 ============ ORDER CREATION START ============");
+            console.log("   Timestamp:", new Date().toISOString());
+            
+            if (!userId || userId === 0) {
+                console.error("❌ UserId is invalid:", userId);
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Chưa đăng nhập',
+                    text: 'Vui lòng đăng nhập để đặt hàng!',
+                    confirmButtonText: 'Đăng nhập ngay'
+                }).then(() => {
+                    window.location.href = "/Account/Login";
+                });
+                return;
+            }
+
+            const form = document.getElementById("orderForm");
+            
+            // Validate form
+            if (!form.checkValidity()) {
+                console.warn("⚠️ Form validation failed");
+                form.reportValidity();
+                return;
+            }
+
+            const fd = new FormData(form);
+            const entries = Object.fromEntries(fd.entries());
+            
+            console.log("📋 Form data collected:", entries);
+
+            // Kiểm tra dữ liệu trước khi gửi
+            if (!entries.Recipient || !entries.PhoneNumber || !entries.AddressDetailRecipient) {
+                console.error("❌ Missing required fields:", {
+                    Recipient: !!entries.Recipient,
+                    PhoneNumber: !!entries.PhoneNumber,
+                    AddressDetailRecipient: !!entries.AddressDetailRecipient
+                });
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Thiếu thông tin',
+                    text: 'Vui lòng nhập đầy đủ thông tin giao hàng (họ tên, số điện thoại, địa chỉ)',
+                    confirmButtonText: 'Đóng'
+                });
+                return;
+            }
+
+            // Build payload matching CreateOrderViewModel
+            const payload = {
+                FullName: entries.Recipient || '',
+                Phone: entries.PhoneNumber || '',
+                Address: entries.AddressDetailRecipient || '',
+                PaymentMethod: entries.PaymentMethod || 'COD',
+                CartIds: cartIds,
+                City: entries.City || '',
+                District: entries.District || '',
+                Ward: entries.Ward || ''
+            };
+
+            console.log("📦 Order payload prepared:");
+            console.log(JSON.stringify(payload, null, 2));
+
+            // Hiển thị loading
+            Swal.fire({
+                title: 'Đang xử lý...',
+                text: 'Vui lòng chờ trong giây lát',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            try {
+                console.log("🌐 Sending POST request to /Order/CreateOrder");
+                const startTime = performance.now();
+                
+                const res = await fetch('/Order/CreateOrder', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
+
+                console.log(`📡 Response received in ${duration}ms`);
+                console.log("   Status:", res.status, res.statusText);
+                console.log("   OK:", res.ok);
+                console.log("   Headers:", Object.fromEntries(res.headers.entries()));
+
+                const contentType = res.headers.get('content-type');
+                let data;
+                
+                // Xử lý response
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await res.text();
+                    console.error('❌ Non-JSON response received:');
+                    console.error('   Content-Type:', contentType);
+                    console.error('   Body preview:', text.substring(0, 200));
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi phản hồi từ server',
+                        html: `
+                            <p>Server trả về định dạng không hợp lệ.</p>
+                            <div class="alert alert-warning text-start small mt-2">
+                                <strong>Content-Type:</strong> ${contentType || 'null'}<br>
+                                <strong>Status:</strong> ${res.status}
+                            </div>
+                        `,
+                        confirmButtonText: 'Đóng'
+                    });
+                    return;
+                }
+                
+                const rawResponseText = await res.text();
+                console.log("📄 Raw response body:", rawResponseText);
+                
+                try {
+                    data = JSON.parse(rawResponseText);
+                    console.log('✅ Parsed JSON response:');
+                    console.log(JSON.stringify(data, null, 2));
+                } catch (parseError) {
+                    console.error('❌ JSON parse error:', parseError);
+                    console.error('   Failed to parse:', rawResponseText);
+                    throw new Error('Invalid JSON response from server');
+                }
+
+                // Log chi tiết về validation
+                console.log("🔍 Response validation:");
+                console.log("   res.ok =", res.ok);
+                console.log("   data =", data ? "exists" : "null/undefined");
+                console.log("   data.success =", data?.success);
+                console.log("   data.message =", data?.message);
+
+                // Kiểm tra cả HTTP status code VÀ success flag
+                if (res.ok && data && data.success === true) {
+                    console.log("✅ Order creation SUCCESSFUL!");
+                    console.log("   Order data:", data.data);
+                    
+                    const timestamp = new Date().getTime();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đặt hàng thành công!',
+                        text: data.message || 'Đơn hàng của bạn đã được tạo thành công.',
+                        confirmButtonText: 'Xem đơn hàng',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        console.log("🔄 Redirecting to order list...");
+                        window.location.href = `/Order/Index?_ts=${timestamp}`;
+                    });
+                } else {
+                    // Hiển thị lỗi nếu không thành công
+                    console.error('❌ Order creation FAILED:');
+                    console.error('   HTTP Status:', res.status, res.ok ? '(OK)' : '(NOT OK)');
+                    console.error('   Success flag:', data?.success);
+                    console.error('   Error message:', data?.message);
+                    console.error('   Full response:', data);
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Đặt hàng thất bại',
+                        html: `
+                            <p>${data?.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.'}</p>
+                            <div class="alert alert-danger text-start small mt-2">
+                                <strong>HTTP Status:</strong> ${res.status}<br>
+                                <strong>Success:</strong> ${data?.success}<br>
+                                ${data?.error ? `<strong>Error:</strong> ${data.error}` : ''}
+                            </div>
+                            <p class="small text-muted mt-2">
+                                💡 Vui lòng kiểm tra F12 Console để xem chi tiết lỗi
+                            </p>
+                        `,
+                        confirmButtonText: 'Đóng'
+                    });
+                }
+            } catch (err) {
+                console.error('💥 ============ EXCEPTION OCCURRED ============');
+                console.error('   Error type:', err.constructor.name);
+                console.error('   Error message:', err.message);
+                console.error('   Stack trace:', err.stack);
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi kết nối',
+                    html: `
+                        <p>Không thể kết nối đến máy chủ.</p>
+                        <div class="alert alert-warning text-start small mt-2">
+                            <strong>Lỗi:</strong> ${err.message}
+                        </div>
+                        <p class="small text-muted">Vui lòng kiểm tra:</p>
+                        <ul class="text-start small">
+                            <li>Kết nối internet của bạn</li>
+                            <li>Backend đang chạy tại <code>https://localhost:7182</code></li>
+                            <li>Bạn đã đăng nhập và có token hợp lệ</li>
+                        </ul>
+                    `,
+                    confirmButtonText: 'Đóng'
+                });
+            } finally {
+                console.log("🏁 ============ ORDER CREATION END ============\n");
+            }
+        });
+    </script>
+}

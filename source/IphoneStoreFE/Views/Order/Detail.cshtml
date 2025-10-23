@@ -1,0 +1,109 @@
+﻿@model IphoneStoreBE.VModels.OrderGetVModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Chi tiết đơn hàng - Apple Store";
+    var backendBase = ViewBag.BackendBaseUrl as string ?? "https://localhost:7182";
+    var backendDefaultImage = $"{backendBase.TrimEnd('/')}/images/default-product.jpg";
+}
+
+<div class="container mt-5 mb-5" style="max-width: 900px;">
+    <h3 class="fw-bold text-center mb-4">🧾 Chi tiết đơn hàng</h3>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="fw-semibold text-primary mb-3">
+                Mã đơn hàng: @Model.OrderCode
+            </h5>
+            <p><strong>📅 Ngày đặt:</strong> @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+            <p><strong>💰 Tổng tiền:</strong> @String.Format("{0:N0} ₫", Model.Total)</p>
+
+            <p>
+                <strong>💳 Thanh toán:</strong>
+                @if (Model.PaymentMethod.Contains("chuyển", StringComparison.OrdinalIgnoreCase))
+                {
+                    <span class="badge bg-success">Chuyển khoản</span>
+                }
+                else
+                {
+                    <span class="badge bg-warning text-dark">COD</span>
+                }
+            </p>
+
+            <p>
+                <strong>📦 Trạng thái:</strong>
+                <span class="badge bg-info text-dark">@Model.OrderStatus</span>
+            </p>
+        </div>
+    </div>
+
+    @if (Model.OrderAddress != null)
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="fw-semibold text-primary mb-3">📍 Người nhận</h5>
+                <p><strong>👤</strong> @Model.OrderAddress.Recipient</p>
+                <p><strong>📞</strong> @Model.OrderAddress.PhoneNumber</p>
+                <p>
+                    <strong>🏠</strong>
+                    @Model.OrderAddress.AddressDetailRecipient,
+                    @Model.OrderAddress.Ward, @Model.OrderAddress.District, @Model.OrderAddress.City
+                </p>
+            </div>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="fw-semibold text-primary mb-3">🛍️ Sản phẩm</h5>
+            @if (Model.OrderDetails == null || !Model.OrderDetails.Any())
+            {
+                <div class="alert alert-info text-center">Không có sản phẩm nào.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ảnh</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Số lượng</th>
+                                <th>Đơn giá</th>
+                                <th>Tổng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderDetails)
+                            {
+                                var imageUrl = item.ProductImage ?? "/images/default-product.jpg";
+                                if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    imageUrl = backendBase.TrimEnd('/') + "/" + imageUrl.TrimStart('/');
+                                }
+                                <tr>
+                                    <td>
+                                        <img src="@imageUrl"
+                                             width="60" height="60" 
+                                             style="object-fit:cover"
+                                             alt="@item.ProductName"
+                                             onerror="this.onerror=null; this.src='@backendDefaultImage';" />
+                                    </td>
+                                    <td>@item.ProductName</td>
+                                    <td>@item.Quantity</td>
+                                    <td>@String.Format("{0:N0} ₫", item.Price)</td>
+                                    <td class="fw-semibold text-danger">
+                                        @String.Format("{0:N0} ₫", item.Quantity * item.Price)
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/Order/Index" class="btn btn-outline-secondary">⬅️ Quay lại danh sách</a>
+    </div>
+</div>

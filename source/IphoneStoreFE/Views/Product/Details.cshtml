@@ -1,0 +1,154 @@
+﻿@using IphoneStoreBE.VModels
+@model ProductGetVModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Chi tiết sản phẩm: " + Model.ProductName;
+    var userId = ViewBag.UserId ?? 0;
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-5">
+            <div class="border rounded shadow-sm p-2">
+                <img src="@Url.Content(string.IsNullOrEmpty(Model.ImageUrl) ? "~/images/default-product.jpg" : Model.ImageUrl)"
+                     class="img-fluid rounded"
+                     alt="@Model.ProductName" />
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <h2 class="fw-bold mb-3">@Model.ProductName</h2>
+            <p class="text-muted">SKU: <strong>@Model.Sku</strong></p>
+            <p class="fs-5 text-danger fw-bold">Giá: @Model.Price.ToString("N0") ₫</p>
+
+            <hr />
+
+            <dl class="row">
+                <dt class="col-sm-4">Màu sắc:</dt>
+                <dd class="col-sm-8">@Model.Color ?? "Chưa cập nhật"</dd>
+
+                <dt class="col-sm-4">Dung lượng:</dt>
+                <dd class="col-sm-8">@Model.Capacity ?? "Chưa cập nhật"</dd>
+
+                <dt class="col-sm-4">Loại sản phẩm:</dt>
+                <dd class="col-sm-8">@Model.ProductType ?? "Chưa cập nhật"</dd>
+
+                <dt class="col-sm-4">Bảo hành:</dt>
+                <dd class="col-sm-8">@Model.Warranty ?? "Chưa cập nhật"</dd>
+
+                <dt class="col-sm-4">Ngày tạo:</dt>
+                <dd class="col-sm-8">@Model.CreatedDate?.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt class="col-sm-4">Ngày cập nhật:</dt>
+                <dd class="col-sm-8">@Model.UpdatedDate?.ToString("dd/MM/yyyy HH:mm")</dd>
+            </dl>
+
+            <div class="mt-3">
+                <h5 class="fw-semibold">Mô tả sản phẩm:</h5>
+                <p>@(string.IsNullOrEmpty(Model.SpecificationDescription) ? "Chưa có mô tả chi tiết cho sản phẩm này." : Model.SpecificationDescription)</p>
+            </div>
+
+            <div class="mt-3">
+                <h5 class="fw-semibold">Đánh giá:</h5>
+                <p>⭐️⭐️⭐️⭐️☆ <small>(4.0/5 từ 123 đánh giá)</small></p>
+            </div>
+
+            <div class="mt-4">
+                <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">← Quay lại danh sách</a>
+                <button class="btn btn-outline-primary" onclick="addToCart(@Model.Id, 1)">Thêm vào giỏ hàng</button>
+                <button class="btn btn-primary" onclick="buyNow(@Model.Id)">Mua ngay</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        const userId = @Json.Serialize(userId);
+
+        async function addToCart(productId, quantity) {
+            try {
+                if (!userId || userId === 0) {
+                    window.location.href = "/Account/Login";
+                    return;
+                }
+
+                const res = await fetch("/Cart/AddToCart", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        productId: productId,
+                        quantity: quantity
+                    })
+                });
+
+                const result = await res.json();
+
+                if (res.ok && result.success) {
+                    window.location.href = "/Cart/Index";
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi!',
+                        text: result.message || "Không thể thêm vào giỏ hàng."
+                    });
+                }
+            } catch (err) {
+                console.error("🚨 [Fetch Error]:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: "Lỗi kết nối máy chủ."
+                });
+            }
+        }
+
+        async function buyNow(productId) {
+            try {
+                if (!userId || userId === 0) {
+                    window.location.href = "/Account/Login";
+                    return;
+                }
+
+                const res = await fetch("/Cart/AddToCart", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        productId: productId,
+                        quantity: 1
+                    })
+                });
+
+                const result = await res.json();
+
+                if (res.ok && result.success) {
+                    // Chuyển thẳng đến trang đặt hàng thay vì giỏ hàng
+                    window.location.href = "/Order/Create";
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi!',
+                        text: result.message || "Không thể thêm vào giỏ hàng."
+                    });
+                }
+            } catch (err) {
+                console.error("🚨 [Fetch Error]:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: "Lỗi kết nối máy chủ."
+                });
+            }
+        }
+    </script>
+}

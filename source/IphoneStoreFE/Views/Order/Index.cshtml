@@ -1,0 +1,263 @@
+﻿@model IEnumerable<IphoneStoreBE.VModels.OrderGetVModel>
+<meta charset="UTF-8">
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Danh sách đơn hàng - Apple Store";
+    var newOrderId = TempData["NewOrderId"] as int?;
+    var newOrderCode = TempData["NewOrderCode"] as string;
+}
+
+<div class="container mt-5" style="max-width: 1200px;">
+    <h3 class="fw-bold text-center mb-4">📦 Danh sách đơn hàng của bạn</h3>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success text-center fw-semibold">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger text-center fw-semibold">@TempData["Error"]</div>
+    }
+
+    @if (ViewBag.Info != null)
+    {
+        <div class="alert alert-info text-center fw-semibold">@ViewBag.Info</div>
+    }
+
+    @if (ViewBag.Error != null || ViewBag.DebugInfo != null)
+    {
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Debug Information
+                    <button class="btn btn-sm btn-outline-light float-end" type="button" data-bs-toggle="collapse" data-bs-target="#debugPanel">
+                        Toggle
+                    </button>
+                </h5>
+            </div>
+            <div id="debugPanel" class="collapse">
+                <div class="card-body bg-dark text-light" style="font-family: 'Courier New', monospace; max-height: 400px; overflow-y: auto;">
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="mb-3">
+                            <strong class="text-danger">❌ Error Message:</strong>
+                            <pre class="text-danger mb-0">@ViewBag.Error</pre>
+                        </div>
+                    }
+
+                    @if (ViewBag.DebugInfo != null)
+                    {
+                        <div class="mb-3">
+                            <strong class="text-warning">🔍 Debug Info:</strong>
+                            <pre class="text-warning mb-0">@ViewBag.DebugInfo</pre>
+                        </div>
+                    }
+
+                    @if (ViewBag.UserId != null)
+                    {
+                        <div class="mb-2">
+                            <strong class="text-info">👤 User ID:</strong>
+                            <span class="text-success">@ViewBag.UserId</span>
+                        </div>
+                    }
+
+                    @if (ViewBag.ApiUrl != null)
+                    {
+                        <div class="mb-2">
+                            <strong class="text-info">🌐 API URL:</strong>
+                            <span class="text-success">@ViewBag.ApiUrl</span>
+                        </div>
+                    }
+
+                    @if (ViewBag.StatusCode != null)
+                    {
+                        <div class="mb-2">
+                            <strong class="text-info">📊 HTTP Status:</strong>
+                            <span class="text-danger">@ViewBag.StatusCode</span>
+                        </div>
+                    }
+
+                    @if (ViewBag.ResponseContent != null)
+                    {
+                        <div class="mb-2">
+                            <strong class="text-info">📡 API Response:</strong>
+                            <pre class="text-warning mt-2" style="font-size: 0.85rem;">@ViewBag.ResponseContent</pre>
+                        </div>
+                    }
+
+                    @if (ViewBag.Exception != null)
+                    {
+                        <div class="mb-2">
+                            <strong class="text-danger">💥 Exception:</strong>
+                            <pre class="text-danger mt-2" style="font-size: 0.85rem;">@ViewBag.Exception</pre>
+                        </div>
+                    }
+
+                    <hr class="bg-secondary" />
+                    <div class="text-muted small">
+                        <strong>🛠️ Troubleshooting Steps:</strong>
+                        <ol class="mb-0 mt-2">
+                            <li>Check Backend is running at <code>https://localhost:7182</code></li>
+                            <li>Verify API endpoint exists: <code>GET /api/order/user/{userId}</code></li>
+                            <li>Check Session UserId is set correctly</li>
+                            <li>Review Visual Studio Output window for detailed logs</li>
+                            <li>Test endpoint in Swagger: <code>https://localhost:7182/swagger</code></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info text-center">
+            Bạn chưa có đơn hàng nào.
+            <a href="/Cart/Index" class="btn btn-outline-primary btn-sm ms-2">🛒 Mua hàng ngay</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle text-center shadow-sm">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Mã đơn hàng</th>
+                        <th>Ngày đặt</th>
+                        <th>Tổng tiền</th>
+                        <th>Phương thức</th>
+                        <th>Trạng thái</th>
+                        <th>Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model)
+                    {
+                        var isNewOrder = newOrderId.HasValue && o.Id == newOrderId.Value;
+                        <tr class="@(isNewOrder ? "table-success" : "")">
+                            <td class="fw-semibold">
+                                @if (isNewOrder)
+                                {
+                                    <span class="badge bg-success me-1">Mới</span>
+                                }
+                                @o.OrderCode
+                            </td>
+                            <td>@o.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-danger fw-semibold">@String.Format("{0:N0} ₫", o.Total)</td>
+                            <td>
+                                @if (o.PaymentMethod == "COD")
+                                {
+                                    <span>💵 COD</span>
+                                }
+                                else if (o.PaymentMethod == "BANK")
+                                {
+                                    <span>🏦 Banking</span>
+                                }
+                                else
+                                {
+                                    <span>@o.PaymentMethod</span>
+                                }
+                            </td>
+                            <td>
+                                @switch (o.OrderStatus)
+                                {
+                                    case "Chờ xác nhận":
+                                        <span class="badge bg-warning text-dark">@o.OrderStatus</span>
+                                        break;
+                                    case "Đã xác nhận":
+                                    case "Đang chuẩn bị":
+                                        <span class="badge bg-info">@o.OrderStatus</span>
+                                        break;
+                                    case "Đang giao hàng":
+                                        <span class="badge bg-primary">@o.OrderStatus</span>
+                                        break;
+                                    case "Đã giao thành công":
+                                        <span class="badge bg-success">@o.OrderStatus</span>
+                                        break;
+                                    case "Đã hủy":
+                                        <span class="badge bg-danger">@o.OrderStatus</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@o.OrderStatus</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                <a class="btn btn-sm btn-primary" href="@Url.Action("Detail", "Order", new { id = o.Id })">Chi tiết</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Phân trang -->
+        @if (ViewBag.TotalPages > 1)
+        {
+            <nav aria-label="Pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    @if (ViewBag.HasPrevious)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1 })" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    }
+
+                    @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+                        </li>
+                    }
+
+                    @if (ViewBag.HasNext)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1 })" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-refresh the page if no orders are shown but we have a new order ID
+            const hasOrdersList = document.querySelector('table tbody tr');
+            const newOrderId = '@newOrderId';
+            
+            if (!hasOrdersList && newOrderId && newOrderId !== '') {
+                console.log("New order created but not showing in list. Refreshing...");
+                // Add timestamp to prevent caching
+                const timestamp = new Date().getTime();
+                setTimeout(() => {
+                    window.location.href = '/Order/Index?_ts=' + timestamp;
+                }, 2000);
+            }
+        });
+    </script>
+}

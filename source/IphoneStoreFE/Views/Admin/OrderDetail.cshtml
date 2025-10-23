@@ -1,0 +1,286 @@
+@model IphoneStoreBE.VModels.OrderGetVModel
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";    
+    Layout = "_AdminLayout";
+    var backendBase = ViewBag.BackendBaseUrl as string ?? "https://localhost:7182";
+    var backendDefaultImage = $"{backendBase.TrimEnd('/')}/images/default-product.jpg";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-receipt"></i> Chi tiết đơn hàng: @Model.OrderCode
+        </h2>
+        <a href="/Admin/Orders" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <!-- Thông tin đơn hàng -->
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Thông tin chung -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Thông tin đơn hàng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Mã đơn hàng:</strong> @Model.OrderCode</p>
+                            <p><strong>Khách hàng:</strong> @Model.UserName</p>
+                            <p><strong>Ngày đặt:</strong> @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p>
+                                <strong>Thanh toán:</strong>
+                                @if (Model.PaymentMethod == "COD")
+                                {
+                                    <span class="badge bg-info">COD</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Chuyển khoản</span>
+                                }
+                            </p>
+                            <p><strong>Phí ship:</strong> @string.Format("{0:N0}", Model.ShippingPrice) ?</p>
+                            <p><strong>Tổng tiền:</strong> <span class="text-danger fw-bold fs-5">@string.Format("{0:N0}", Model.Total) ?</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danh sách sản phẩm -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box-seam"></i> Sản phẩm trong đơn hàng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.OrderDetails == null || !Model.OrderDetails.Any())
+                    {
+                        <div class="alert alert-info">Không có sản phẩm nào trong đơn hàng.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 80px;">Ảnh</th>
+                                        <th>Sản phẩm</th>
+                                        <th style="width: 100px;">Số lượng</th>
+                                        <th style="width: 150px;">Đơn giá</th>
+                                        <th style="width: 150px;">Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.OrderDetails)
+                                    {
+                                        var imageUrl = item.ProductImage ?? "/images/default-product.jpg";
+                                        if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            imageUrl = backendBase.TrimEnd('/') + "/" + imageUrl.TrimStart('/');
+                                        }
+                                        <tr>
+                                            <td>
+                                                <img src="@imageUrl"
+                                                     class="img-thumbnail"
+                                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                                     alt="@item.ProductName"
+                                                     onerror="this.onerror=null; this.src='@backendDefaultImage';" />
+                                            </td>
+                                            <td>
+                                                <strong>@item.ProductName</strong>
+                                            </td>
+                                            <td class="text-center">@item.Quantity</td>
+                                            <td class="text-end">@string.Format("{0:N0}", item.Price) ₫</td>
+                                            <td class="text-end fw-bold text-danger">
+                                                @string.Format("{0:N0}", item.Quantity * item.Price) ₫
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="4" class="text-end"><strong>Tổng tiền hàng:</strong></td>
+                                        <td class="text-end fw-bold">
+                                            @string.Format("{0:N0}", Model.OrderDetails.Sum(x => x.Quantity * x.Price)) ₫
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-end"><strong>Phí vận chuyển:</strong></td>
+                                        <td class="text-end fw-bold">@string.Format("{0:N0}", Model.ShippingPrice) ₫</td>
+                                    </tr>
+                                    <tr class="table-primary">
+                                        <td colspan="4" class="text-end"><strong>TỔNG CỘNG:</strong></td>
+                                        <td class="text-end fw-bold fs-5 text-danger">
+                                            @string.Format("{0:N0}", Model.Total) ₫
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Trạng thái đơn hàng -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-truck"></i> Trạng thái đơn hàng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                            <label class="form-label fw-bold">Trạng thái hiện tại:</label>
+                        <div>
+                            @if (Model.OrderStatus == "Chờ xác nhận")
+                            {
+                                <span class="badge bg-warning fs-6">Chờ xác nhận</span>
+                            }
+                            else if (Model.OrderStatus == "Xác nhận")
+                            {
+                                <span class="badge bg-primary fs-6">Xác nhận</span>
+                            }
+                            else if (Model.OrderStatus == "Đang chuẩn bị")
+                            {
+                                <span class="badge bg-info fs-6">Đang chuẩn bị</span>
+                            }
+                            else if (Model.OrderStatus == "Đang giao hàng")
+                            {
+                                <span class="badge bg-success fs-6">Đang giao hàng</span>
+                            }
+                            else if (Model.OrderStatus == "Đã giao thành công")
+                            {
+                                <span class="badge bg-dark fs-6">Hoàn thành</span>
+                            }
+                            else if (Model.OrderStatus == "Đã hủy")
+                            {
+                                <span class="badge bg-danger fs-6">Đã hủy</span>
+                            }
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Cập nhật trạng thái:</label>
+                        <select class="form-select" id="orderStatusSelect">
+                            <option value="">-- Chọn trạng thái --</option>
+                            <option value="Chờ xác nhận">Chờ xác nhận</option>
+                            <option value="Xác nhận">Xác nhận</option>
+                            <option value="Đang chuẩn bị">Đang chuẩn bị</option>
+                            <option value="Đang giao hàng">Đang giao hàng</option>
+                            <option value="Đã giao thành công">Đã giao thành công</option>
+                            <option value="Đã hủy">Đã hủy</option>
+                        </select>
+                        <small class="text-muted">Trạng thái hiện tại: <strong>@Model.OrderStatus</strong></small>
+                    </div>
+
+                    <button type="button" class="btn btn-primary w-100" onclick="updateOrderStatus()">
+                        <i class="bi bi-check-circle"></i> Cập nhật trạng thái
+                    </button>
+                </div>
+            </div>
+
+            <!-- Địa chỉ giao hàng -->
+            @if (Model.OrderAddress != null)
+            {
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-geo-alt"></i> Địa chỉ giao hàng
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong><i class="bi bi-person"></i> Người nhận:</strong><br />@Model.OrderAddress.Recipient</p>
+                        <p><strong><i class="bi bi-telephone"></i> Số điện thoại:</strong><br />@Model.OrderAddress.PhoneNumber</p>
+                        <p>
+                            <strong><i class="bi bi-house"></i> Địa chỉ:</strong><br />
+                            @Model.OrderAddress.AddressDetailRecipient<br />
+                            @Model.OrderAddress.Ward, @Model.OrderAddress.District<br />
+                            @Model.OrderAddress.City
+                        </p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        async function updateOrderStatus() {
+            const selectElement = document.getElementById('orderStatusSelect');
+            const newStatus = selectElement.value;
+
+            if (!newStatus) {
+                Swal.fire({
+                    icon: 'warning',
+                        title: 'Chưa chọn trạng thái',
+                    text: 'Vui lòng chọn trạng thái mới cho đơn hàng.'
+                });
+                return;
+            }
+
+            // Xác nhận trước khi cập nhật
+            const result = await Swal.fire({
+                title: 'Xác nhận cập nhật?',
+                text: `Bạn muốn cập nhật trạng thái thành: ${newStatus}`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Xác nhận',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Admin/UpdateOrderStatus?id=@Model.Id&status=${encodeURIComponent(newStatus)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công!',
+                        text: data.message,
+                        timer: 2000
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi!',
+                        text: data.message || 'Không thể cập nhật trạng thái.'
+                    });
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                Swal.fire({
+                    icon: 'error',  
+                    title: 'Lỗi!',
+                    text: 'Xảy ra lỗi khi cập nhật trạng thái đơn hàng.'
+                });
+            }
+        }
+    </script>
+}

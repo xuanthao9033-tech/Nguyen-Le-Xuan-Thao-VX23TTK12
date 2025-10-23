@@ -1,0 +1,23 @@
+﻿@using IphoneStoreBE.VModels
+@model IphoneStoreFE.Models.PagedEntity<ProductGetVModel>
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Danh mục sản phẩm";
+}
+
+<h3>@ViewBag.CategoryName</h3>
+
+@if (Model?.Items == null || !Model.Items.Any())
+{
+    <div class="alert alert-info">Không có sản phẩm trong danh mục này.</div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-4 g-4">
+        @foreach (var product in Model.Items)
+        {
+            @Html.Partial("_ProductCardPartial", product)
+        }
+    </div>
+}

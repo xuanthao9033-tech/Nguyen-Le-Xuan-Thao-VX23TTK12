@@ -1,0 +1,142 @@
+﻿@using IphoneStoreBE.VModels
+@model IphoneStoreFE.Models.PagedEntity<ProductGetVModel>
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = ViewData["Title"] ?? "Apple Store - Trang chủ";
+
+    var userId = ViewBag.UserId ?? 0;  // Lấy userId từ ViewBag
+    var keyword = ViewBag.SearchKeyword ?? "";
+    var resultCount = ViewBag.ResultCount ?? 0;
+}
+
+<div class="container mt-5 mb-5" style="max-width: 1200px;">
+    <h3 class="fw-bold text-center mb-4">
+        @if (!string.IsNullOrEmpty(keyword))
+        {
+            <text>Kết quả tìm kiếm cho: “@keyword” (@resultCount sản phẩm)</text>
+        }
+        else
+        {
+            <text>✨ Danh sách sản phẩm nổi bật ✨</text>
+        }
+    </h3>
+
+    <div class="row row-cols-1 row-cols-md-4 g-4">
+        @if (Model?.Items == null || !Model.Items.Any())
+        {
+            <div class="col text-center text-muted mt-5">
+                <p>Không tìm thấy sản phẩm nào.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var product in Model.Items)
+            {
+                @Html.Partial("_ProductCardPartial", product)
+            }
+        }
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+                    <a class="page-link" href="?page=@(Model.PageIndex - 1)">«</a>
+                </li>
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                        <a class="page-link" href="?page=@i">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="?page=@(Model.PageIndex + 1)">»</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        const userId = @userId;  // Lấy userId từ ViewBag
+        console.log("🟢 userId from ViewBag: ", userId);  // Kiểm tra userId
+
+        async function addToCart(productId, quantity) {
+            console.log("🟢 [addToCart] START");
+            console.log("➡️ Input data:", {
+                userId: userId,
+                productId: productId,
+                quantity: quantity
+            });
+
+            try {
+                // ======= STEP 2. CHECK LOGIN =======
+                if (!userId || userId === 0) {
+                    alert("⚠️ Vui lòng đăng nhập trước khi thêm sản phẩm.");
+                    window.location.href = "/Account/Login"; // Chuyển hướng tới Login nếu chưa đăng nhập
+                    return;
+                }
+
+                // ======= STEP 3. GỬI REQUEST =======
+                console.log("📡 Sending POST request to BE...");
+                const res = await fetch("https://localhost:7182/api/Cart", {
+                    method: "POST",
+                    credentials: "include",  // Chắc chắn cookie được gửi đúng
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId, productId, quantity })
+                });
+
+                // ======= STEP 4. LOG RESPONSE STATUS =======
+                console.log("✅ [Response Status]:", res.status);
+
+                // ======= STEP 5. PARSE RESPONSE JSON =======
+                let result;
+                try {
+                    result = await res.json();
+                    console.log("📦 [Response JSON]:", result);
+                } catch (jsonErr) {
+                    console.error("❌ [JSON Parse Error]:", jsonErr);
+                    alert("⚠️ Phản hồi máy chủ không hợp lệ.");
+                    return;
+                }
+
+                // ======= STEP 6. HIỂN THỊ KẾT QUẢ =======
+                if (res.ok && result && result.success) {
+                    console.log("🎉 [SUCCESS] Message:", result.message);
+                    alert("✅ " + result.message);
+                } else {
+                    console.warn("⚠️ [FAILED] Message:", result.message);
+                    alert("❌ " + (result.message || "Không thể thêm vào giỏ hàng."));
+                }
+            } catch (err) {
+                // ======= STEP 7. LỖI KẾT NỐI =======
+                console.error("🚨 [Fetch Error]:", err);
+                alert("⚠️ Lỗi kết nối máy chủ.");
+            }
+
+            console.log("🔚 [addToCart] END\n");
+        }
+
+        // 🛍️ Mua ngay
+        async function buyNow(productId) {
+            await addToCart(productId, 1);
+            window.location.href = "/Cart/Index"; // Sau khi mua ngay, chuyển hướng tới giỏ hàng
+        }
+    </script>
+
+    <style>
+        .card:hover img {
+            transform: scale(1.05);
+            transition: 0.3s;
+        }
+
+        .ratio-4x3 {
+            aspect-ratio: 4 / 3;
+        }
+    </style>
+}
